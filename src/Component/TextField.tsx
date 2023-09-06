@@ -61,7 +61,7 @@ function TextField({handleSubmit, inputValidator, setInputValidator}: Props) {
   return (
       <section className='container__user-input'>
         <form onSubmit={handleSubmit} autoComplete="off">
-        <input name="input_romaji" className={`${inputValidator && 'wrong'}`} placeholder='Your Response' type='text' value={upgradeInput}
+        <input autoFocus name="input_romaji" className={`${inputValidator && 'wrong'}`} placeholder='Your Response' type='text' value={upgradeInput}
           onChange={(e) => handleInputChange(e)} />
         </form>
         {/* <p className='text__modifier'>romanize: {upgradeInput}</p> */}

@@ -10,19 +10,21 @@ function SideReviewer() {
     // const [previousReviewResume, setPreviousReviewResume] = useState([])
     const [previousReviewMistakes, setPreviousReviewMistakes] = useState<string[]>([])
     const {kanjiDefinition, setKanjiDefinition} = useContext(AppContext)
-
+    const [mode, setMode] = useState('')
     // const [heightenedKanji, setHeightenedKanji] = useState('') 
     const [inputValidator, setInputValidator] = useState(false)
     
     const nextReviewBegin = async (firstTime: boolean, mode?:string) => {
         setReviewStatus('begin')
+        // console.log("mode:",mode)
+        console.log("previous:",previousReviewBegin)
         const isMistakeMode = mode==='mistake' ? previousReviewMistakes : kanjiList
         const randomValue = Math.floor(Math.random() * isMistakeMode.length)
         const selectedKanji = isMistakeMode[randomValue]
 
         if(previousReviewBegin.length !== isMistakeMode.length){
                 if(previousReviewBegin.includes(selectedKanji)){
-                    nextReviewBegin(false)
+                    nextReviewBegin(firstTime,mode)
                 }
                 else{
                     setPreviousReviewBegin(firstTime ? [selectedKanji] : [...previousReviewBegin, selectedKanji])
@@ -37,18 +39,26 @@ function SideReviewer() {
                     }
                 }
             }
+            else{
+                setPreviousReviewBegin([])
+                setReviewStatus('none')
+            }
     }
     
     const handleBegin = () => {
+        setMode('')
         setPreviousReviewBegin([])
         nextReviewBegin(true)
     }
     const handleResume = () => {
+        setMode('')
         nextReviewBegin(false)
     }
     const handleMistakes = () => {
+        setMode('mistake')
         if(previousReviewMistakes.length)
             nextReviewBegin(true, 'mistake')
+
     }
 
     const getFirstReading = (reading:any) => {
@@ -68,7 +78,7 @@ function SideReviewer() {
         // console.log(`${formProps.input_romaji} === ${readings}`)
         if(formProps.input_romaji===readings){
             setInputValidator(false)
-            nextReviewBegin(false)
+            nextReviewBegin(false, mode)
         }
         else{
             // console.log(formProps.input_romaji)
