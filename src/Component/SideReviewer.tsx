@@ -16,8 +16,6 @@ function SideReviewer() {
     
     const nextReviewBegin = async (firstTime: boolean, mode?:string) => {
         setReviewStatus('begin')
-        // console.log("mode:",mode)
-        console.log("previous:",previousReviewBegin)
         const isMistakeMode = mode==='mistake' ? previousReviewMistakes : kanjiList
         const randomValue = Math.floor(Math.random() * isMistakeMode.length)
         const selectedKanji = isMistakeMode[randomValue]
