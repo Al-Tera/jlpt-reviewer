@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import Sidebar from './Component/Sidebar';
+import Header from './Component/Header';
 import { AppContext } from './AppContext';
 import SideLesson from './Component/SideLesson';
 import SideReviewer from './Component/SideReviewer';
@@ -10,7 +10,7 @@ function App() {
 
   return (
     <article className="App">
-      <Sidebar />
+      <Header />
       <div className='reviewer__container'>
         {
           isLoadingList &&

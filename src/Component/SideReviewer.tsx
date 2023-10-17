@@ -1,135 +1,172 @@
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import TextField from './TextField.tsx'
-import { getKanjiDefinition } from '../common/helper_function.ts'
-import { AppContext } from '../AppContext.tsx';
+import { AppContext, IKanji } from '../AppContext.tsx';
 import arrow from '../assets/arrow.svg'
 
 function SideReviewer() {
 
-    const { kanjiList, title, previousReviewBegin, setPreviousReviewBegin, isLoadingReviewer, setIsLoadingReviewer, reviewStatus, setReviewStatus } = useContext(AppContext)
-    // const [previousReviewResume, setPreviousReviewResume] = useState([])
-    const [previousReviewMistakes, setPreviousReviewMistakes] = useState<string[]>([])
-    const {kanjiDefinition, setKanjiDefinition} = useContext(AppContext)
+    const { kanjiList, level, previousReviewBegin, setPreviousReviewBegin, reviewStatus, setReviewStatus } = useContext(AppContext)
+    const [previousReviewMistakes, setPreviousReviewMistakes] = useState<Record<string, any>>({
+        'n5': [],
+        'n4': [],
+        'n3': [],
+        'n2': [],
+        'n1': [],
+    })
+    const [fortKanji, setFortKanji] = useState({ default: '', replaced: '', unreplaced: '' })
+    const [inputValidator, setInputValidator] = useState<string | null>(null)
+    const header = document.querySelector('.header')
+    const [kanjiDefinition, setKanjiDefinition] = useState<IKanji>()
 
-    // const [heightenedKanji, setHeightenedKanji] = useState('') 
-    const [inputValidator, setInputValidator] = useState(false)
-    
-    const nextReviewBegin = async (firstTime: boolean, mode?:string) => {
+    const getRandomUniqueInteger = (array: string[], array2: string[]) => {
+        let randomValue;
+        let randomKanji:any;
+        do {
+          randomValue = Math.floor(Math.random() * array2.length)
+          randomKanji = array2[randomValue]
+        } while (array.map((item:any)=>item.kanji).includes(randomKanji.kanji));
+        return randomKanji;
+      }
+
+
+    const nextReviewBegin = (firstTime = false, mistake = false) => {
         setReviewStatus('begin')
-        const isMistakeMode = mode==='mistake' ? previousReviewMistakes : kanjiList
-        const randomValue = Math.floor(Math.random() * isMistakeMode.length)
-        const selectedKanji = isMistakeMode[randomValue]
 
-        if(previousReviewBegin.length !== isMistakeMode.length){
-                if(previousReviewBegin.includes(selectedKanji)){
-                    nextReviewBegin(false)
-                }
-                else{
-                    setPreviousReviewBegin(firstTime ? [selectedKanji] : [...previousReviewBegin, selectedKanji])
-                    setIsLoadingReviewer(true)
-                    try{
-                        const data = await getKanjiDefinition(selectedKanji)
-                        setKanjiDefinition(data)
-                        setIsLoadingReviewer(false)
-                    }
-                    catch(err){
-                        console.log(err)
-                    }
-                }
-            }
+        const isMistake = mistake || header?.getAttribute('mode') === 'mistake'
+        const selectedList: any = isMistake ? previousReviewMistakes[`n${level}`] : kanjiList
+        const arrayOfObjects = Object.keys(selectedList).map((key) => {
+            const obj = selectedList[key];
+            return { ...obj };
+        });
+
+        if (previousReviewBegin.length !== arrayOfObjects.length) {
+            const selectedKanji:any = getRandomUniqueInteger(previousReviewBegin, arrayOfObjects)
+            setReviewStatus('begin')
+            setPreviousReviewBegin(firstTime ? [selectedKanji] : [...previousReviewBegin, selectedKanji])
+            setKanjiDefinition(selectedKanji)
+        }
+        else handleEndReview()
     }
-    
+
+    useEffect(() => {
+        if (kanjiDefinition) combineQuestion()
+    }, [kanjiDefinition])
+
     const handleBegin = () => {
+        header?.setAttribute('mode', '')
         setPreviousReviewBegin([])
         nextReviewBegin(true)
     }
     const handleResume = () => {
-        nextReviewBegin(false)
+        header?.setAttribute('mode', '')
+        nextReviewBegin()
     }
     const handleMistakes = () => {
-        if(previousReviewMistakes.length)
-            nextReviewBegin(true, 'mistake')
+        console.log(previousReviewMistakes)
+        if (Object.keys(previousReviewMistakes[`n${level}`]).length) {
+            header?.setAttribute('mode', 'mistake')
+            nextReviewBegin(true, true)
+        }
     }
 
-    const getFirstReading = (reading:any) => {
-        return reading.join(',').replaceAll('-','').split(/[.,]/g)[0]
-    }
-
-    const handleSubmit = (e:any) => {
+    const handleSubmit = (e: any) => {
         e.preventDefault()
-        e.target.reset()
         const formData = new FormData(e.target)
         const formProps = Object.fromEntries(formData)
-        const kun_readings = kanjiDefinition?.kun_readings
-        const on_readings = kanjiDefinition?.on_readings
-        const kun_reading = getFirstReading(kun_readings)
-        const on_reading = getFirstReading(on_readings)
-        const readings = kun_readings?.length ? kun_reading : on_reading
-        // console.log(`${formProps.input_romaji} === ${readings}`)
-        if(formProps.input_romaji===readings){
-            setInputValidator(false)
+        const input: any = formProps.input_romaji
+        const inputInReadings = (kanjiDefinition?.kun_readings ? kanjiDefinition.kun_readings : kanjiDefinition?.on_readings)?.includes(input)
+        const hasParen = /[\(\)]/.test(fortKanji.default)
+
+        if (input === fortKanji.unreplaced.replace('-', '')) {
+            e.target.reset()
+            setInputValidator(null)
             nextReviewBegin(false)
         }
-        else{
-            // console.log(formProps.input_romaji)
-
-            if(kanjiDefinition && !previousReviewMistakes.includes(kanjiDefinition.kanji)){
-                const previousMistakes = [...previousReviewMistakes, kanjiDefinition?.kanji]
-                setPreviousReviewMistakes(previousMistakes)
-
+        else if (inputInReadings && !hasParen) setInputValidator('blue')
+        else {
+            if (kanjiDefinition && !previousReviewMistakes[`n${level}`].hasOwnProperty(kanjiDefinition.kanji)) {
+                const prevMiss = { ...previousReviewMistakes }
+                prevMiss[`n${level}`] = { ...prevMiss[`n${level}`], [kanjiDefinition.kanji]: kanjiDefinition }
+                setPreviousReviewMistakes(prevMiss)
             }
-            // previousMistakes.push(kanjiDefinition?.kanji)
-            // setPreviousReviewMistakes(mistakes=>mistakes.concat(previousMistakes))
-
-            setInputValidator(true)
+            setInputValidator('red')
         }
-        // formData.set(formProps.input_romaji, 'awdaa')
     }
-    
+
     const handleEndReview = () => {
+        header?.setAttribute('mode', '')
         setReviewStatus('none')
-        setInputValidator(false)
-        setPreviousReviewBegin((list:any) => list.slice(0,-1))
-        // setKanjiDefinition(defaultState.kanjiDefinition)
+        setInputValidator(null)
+        setPreviousReviewBegin((list: any) => list.slice(0, -1))
     }
+
+    const getRandomItem = (array: string[]) => {
+        return array[Math.floor(Math.random() * array.length)]
+    }
+
+    const combineQuestion = () => {
+        if (kanjiDefinition) {
+            const kReading = kanjiDefinition.kun_readings
+            const oReading: any = kanjiDefinition.on_readings
+            const selectedReading = kReading ? getRandomItem(kReading) : getRandomItem(oReading)
+            const regexDiverse = /([-]|[^-()]+|\([^)]+\))/g;
+            const regexParMin = new RegExp(/[\(\)-]/);
+            const result = selectedReading.match(regexDiverse);
+            if (result) {
+                const replaced = result.map(item => regexParMin.test(item) ? item : item.split('っ').map(item2 => item2 === '' ? 'っ' : kanjiDefinition.kanji).join('')).join('').replace('-', '...')
+                const unreplaced = result.join('')
+                setFortKanji({ default: result.join(''), replaced: replaced.replace(/[\(\)]/g, ''), unreplaced: unreplaced.replace(/[\(\)]/g, '') })
+            }
+        }
+    }
+
 
     return (
         <section className='section__reviewer'>
-            
-            {
-            reviewStatus !== 'none' && 
-            <button className='btn__end_review' onClick={handleEndReview}>
-                <img src={arrow} alt="end" />
-            </button>
-            }
-            <p className='title'>Reviewing: N{title}</p>
+
+            <div className='reviewer__title__container'>
+                <p className='title'>Reviewing: N{level}</p>
+                {
+                    reviewStatus !== 'none' &&
+                    <button className='btn__end_review' onClick={handleEndReview}>
+                        <img src={arrow} alt="end" />
+                    </button>
+                }
+            </div>
             {
                 reviewStatus === 'none' ?
-                <div className='btn__container'>
-                    <button className='btn__begin' onClick={handleBegin}>Begin</button>
-                    <button onClick={handleResume} className='btn__counter btn__resume' data-counter={`${previousReviewBegin.length}/${kanjiList?.length}`}>Resume</button>
-                    <button onClick={handleMistakes} disabled={!previousReviewMistakes.length} className='btn__counter btn__mistakes' data-counter={`${`${previousReviewMistakes.length}`}`}>Mistakes</button>
-                </div>
-            : reviewStatus === 'begin' && isLoadingReviewer ?
-                <span className='loader' />
-                :
-                <div className='section__reviewer__begin'>
-                    {
-                        <>
-                            <p>{kanjiDefinition?.kanji}</p>
-                            <p>{kanjiDefinition?.kun_readings.length ? 'Kun reading' : 'On reading'}</p>
-                            <TextField inputValidator={inputValidator} setInputValidator={setInputValidator} handleSubmit={handleSubmit} />
-                            {
-                                inputValidator &&
-                                <p className='validator'>wrong</p>
-                            }
-                            {/* <button className='btn__end_review' onClick={handleEndReview}>End Review</button> */}
-                        </>
-                    }
-                    
-                </div>
+                    <div className='btn__container'>
+                        <button className='btn__begin' onClick={handleBegin}>Begin</button>
+                        <button onClick={handleResume} className='btn__counter btn__resume' data-counter={`${previousReviewBegin.length}/${kanjiList?.length}`}>Resume</button>
+                        <button onClick={handleMistakes} disabled={!Object.keys(previousReviewMistakes[`n${level}`]).length} className='btn__counter btn__mistakes' data-counter={`${`${Object.keys(previousReviewMistakes[`n${level}`]).length}`}`}>Mistakes</button>
+                    </div>
+                    : reviewStatus === 'begin' &&
+                    <div className='section__reviewer__begin'>
+                        {
+                            <>
+                                <p className='question'>{fortKanji.replaced}</p>
+                                <p>{kanjiDefinition?.kun_readings ? 'Kun reading' : 'On reading'}</p>
+                                <form onSubmit={handleSubmit} autoComplete="off">
+                                    {inputValidator === 'blue' && <span className='textfield__hint'>There is another..</span>}
+                                    <TextField inputValidator={inputValidator} setInputValidator={setInputValidator} />
+                                </form>
+
+                                <button className='description__container'>
+                                    <p className='title'>Description</p>
+                                    <div className='description__content'>
+                                        <div>
+                                            <p>Kanji: {kanjiDefinition?.kanji}</p>
+                                            {kanjiDefinition?.kun_readings && <p>Kun reading: {kanjiDefinition.kun_readings.join(', ')}</p>}
+                                            <p>On reading: {kanjiDefinition?.on_readings?.join(', ')}</p>
+                                            <p>Definition: {kanjiDefinition?.meanings}</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            </>
+                        }
+
+                    </div>
             }
-            {/* <TextField /> */}
         </section>
     )
 }

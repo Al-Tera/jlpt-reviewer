@@ -1,13 +1,12 @@
-import axios from "axios";
 import { Dispatch, ReactNode, SetStateAction, createContext, useContext, useState } from "react";
-import { getKanjiDefinition } from "./common/helper_function";
+import Kanjis from "./common/kanjiList";
 
 export type IKanji = {
-    kanji: string;
-    description: string;
-    on_readings: string[];
-    kun_readings: string[];
-    meanings: string[];
+    'kanji': string;
+    'description': string;
+    'on_readings': string[] | null;
+    'kun_readings': string[] | null;
+    'meanings': string[];
 }
 
 export interface AppContextInterface {
@@ -21,44 +20,44 @@ export interface AppContextInterface {
     setIsLoadingDefinition: Dispatch<SetStateAction<boolean>>,
     isLoadingReviewer: boolean,
     setIsLoadingReviewer: Dispatch<SetStateAction<boolean>>,
-    getKanjiList: (level:string)=> void;
-    handleKanjiListClick: (level:string)=> void;
-    handleKanjiReviewClick: (level:string)=> void;
-    handleClickKanji: (level:string)=> void;
+    getKanjiList: (level: string) => void;
+    handleKanjiListClick: (level: string) => void;
+    handleKanjiReviewClick: (level: string) => void;
+    handleClickKanji: (level: string) => void;
     mode: string | null,
     setMode: Dispatch<SetStateAction<string | null>>,
-    title: string  | null,
-    setTitle: Dispatch<SetStateAction<string | null>>,
     reviewStatus: string,
     setReviewStatus: Dispatch<SetStateAction<string>>,
     previousReviewBegin: string[],
     setPreviousReviewBegin: Dispatch<SetStateAction<string[]>>,
+    level: string | null,
+    setLevel: Dispatch<SetStateAction<string | null>>,
 
 }
 
 const defaultState = {
     kanjiDefinition: null,
-    setKanjiDefinition: () => {},
+    setKanjiDefinition: () => { },
     kanjiList: [],
-    setKanjiList: () => {},
+    setKanjiList: () => { },
     isLoadingList: false,
-    setIsLoadingList: () => {},
+    setIsLoadingList: () => { },
     isLoadingDefinition: false,
-    setIsLoadingDefinition: () => {},
+    setIsLoadingDefinition: () => { },
     isLoadingReviewer: false,
-    setIsLoadingReviewer: () => {},
-    getKanjiList: () => {},
-    handleKanjiListClick: () => {},
-    handleKanjiReviewClick: () => {},
-    handleClickKanji: () => {},
+    setIsLoadingReviewer: () => { },
+    getKanjiList: () => { },
+    handleKanjiListClick: () => { },
+    handleKanjiReviewClick: () => { },
+    handleClickKanji: () => { },
     mode: '',
-    setMode: () => {},
-    title: '',
-    setTitle: () => {},
+    setMode: () => { },
+    level: '',
+    setLevel: () => { },
     reviewStatus: '',
-    setReviewStatus: () => {},
+    setReviewStatus: () => { },
     previousReviewBegin: [],
-    setPreviousReviewBegin: () => {},
+    setPreviousReviewBegin: () => { },
 
 } as AppContextInterface
 
@@ -70,54 +69,43 @@ type AppProviderProps = {
 
 export function useAppContext(): AppContextInterface {
     return useContext(AppContext);
-  }
+}
 
-export default function AppProvider ({children}: AppProviderProps) {
+export default function AppProvider({ children }: AppProviderProps) {
     const [kanjiDefinition, setKanjiDefinition] = useState<IKanji | null>(null)
     const [isLoadingList, setIsLoadingList] = useState<boolean>(false)
     const [isLoadingDefinition, setIsLoadingDefinition] = useState<boolean>(false)
     const [isLoadingReviewer, setIsLoadingReviewer] = useState<boolean>(false)
     const [kanjiList, setKanjiList] = useState<string[]>([])
     const [mode, setMode] = useState<string | null>('')
-    const [title, setTitle] = useState<string | null>('')
+    const [level, setLevel] = useState<string | null>(null)
     const [reviewStatus, setReviewStatus] = useState('none')
     const [previousReviewBegin, setPreviousReviewBegin] = useState<any>([])
 
-    const urlKanjiGrade = 'https://kanjiapi.dev/v1/kanji/grade'
-
-    const getKanjiList = async (level: string) => {
-        try{
-            const response = await axios.get(`${urlKanjiGrade}-${Math.abs(parseInt(level)-6)}`)
-            .then(res => res.data)
-            setKanjiList(response)
-        }
-        catch(err){console.log(err)}
+    const getKanjiList = async (checkLevel: string) => {
+        const activeKanjis = Object.entries(Kanjis[`n${checkLevel}`]).map(([kanji, value]:[string, any]) => { return { ...value, kanji } })
+        setKanjiList(activeKanjis)
     }
 
-    const handleClickKanji = async (kanji:string) => {
-        try{
-            setIsLoadingDefinition(true)
-            const data = await getKanjiDefinition(kanji)
-            setKanjiDefinition(data)
-            setIsLoadingDefinition(false)
-        }
-        catch(err){console.log(err)}
+    const handleClickKanji = (kanji: string) => {
+        const findKanji: Record<string, IKanji> = Kanjis[`n${level}`]
+        setKanjiDefinition({ ...findKanji[kanji], kanji })
     }
 
-    const handleKanjiListClick = async (lesson:any) => {
+    const handleKanjiListClick = async (lesson: any) => {
         setMode('lessons')
-        getKanjiList(lesson)
-      }
-    
-    
-      const handleKanjiReviewClick = (reviewer:any) => {
+        setLevel(lesson)
+    }
+
+
+    const handleKanjiReviewClick = (reviewer: any) => {
         setMode('reviewer')
-        setTitle(reviewer)
+        setLevel(reviewer)
         getKanjiList(reviewer)
         setReviewStatus('none')
-      }
+    }
 
-      
+
     const contextValue: AppContextInterface = {
         kanjiDefinition,
         setKanjiDefinition,
@@ -127,13 +115,13 @@ export default function AppProvider ({children}: AppProviderProps) {
         setIsLoadingList,
         isLoadingDefinition,
         setIsLoadingDefinition,
-        isLoadingReviewer, 
+        isLoadingReviewer,
         setIsLoadingReviewer,
         getKanjiList,
         mode,
         setMode,
-        title,
-        setTitle,
+        level,
+        setLevel,
         handleKanjiListClick,
         handleKanjiReviewClick,
         handleClickKanji,
@@ -145,7 +133,7 @@ export default function AppProvider ({children}: AppProviderProps) {
 
     return (
         <AppContext.Provider value={contextValue}>
-            {children} 
+            {children}
         </AppContext.Provider>
     )
 
