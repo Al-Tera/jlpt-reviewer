@@ -409,6 +409,7 @@ input {
 
 .reviewer__title__container {
     position: relative;
+
     .btn__end_review {
         position: absolute;
         top: 50%;
@@ -421,6 +422,7 @@ input {
         display: grid;
         place-items: center;
         cursor: pointer;
+
         img {
             object-fit: contain;
             transform: rotate(-90deg);
@@ -571,11 +573,14 @@ input {
         font-size: 35px;
     }
 
+    .btn__container{
+        gap: 50px;
+    }
+
     div {
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
-        gap: 50px;
 
         .btn__begin,
         .btn__resume,
@@ -651,6 +656,16 @@ input {
                     row-gap: 5px;
                     font-size: 20px;
                 }
+                .find__reading{
+                    position: relative;
+                    &:before{
+                        position: absolute;
+                        width: 100%;
+                        height:2px;
+                        background-color: cyan;
+                        bottom:-2px;
+                    }
+                }
             }
 
             .title {
@@ -680,7 +695,6 @@ input {
     }
 
     .loader {
-
         width: 25px;
         height: 25px;
         border-radius: 100%;

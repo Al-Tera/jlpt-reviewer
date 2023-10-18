@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react'
+import { useContext, useState, useEffect, Fragment } from 'react'
 import TextField from './TextField.tsx'
 import { AppContext, IKanji } from '../AppContext.tsx';
 import arrow from '../assets/arrow.svg'
@@ -20,13 +20,13 @@ function SideReviewer() {
 
     const getRandomUniqueInteger = (array: string[], array2: string[]) => {
         let randomValue;
-        let randomKanji:any;
+        let randomKanji: any;
         do {
-          randomValue = Math.floor(Math.random() * array2.length)
-          randomKanji = array2[randomValue]
-        } while (array.map((item:any)=>item.kanji).includes(randomKanji.kanji));
+            randomValue = Math.floor(Math.random() * array2.length)
+            randomKanji = array2[randomValue]
+        } while (array.map((item: any) => item.kanji).includes(randomKanji.kanji));
         return randomKanji;
-      }
+    }
 
 
     const nextReviewBegin = (firstTime = false, mistake = false) => {
@@ -38,9 +38,8 @@ function SideReviewer() {
             const obj = selectedList[key];
             return { ...obj };
         });
-
         if (previousReviewBegin.length !== arrayOfObjects.length) {
-            const selectedKanji:any = getRandomUniqueInteger(previousReviewBegin, arrayOfObjects)
+            const selectedKanji: any = getRandomUniqueInteger(previousReviewBegin, arrayOfObjects)
             setReviewStatus('begin')
             setPreviousReviewBegin(firstTime ? [selectedKanji] : [...previousReviewBegin, selectedKanji])
             setKanjiDefinition(selectedKanji)
@@ -120,6 +119,17 @@ function SideReviewer() {
         }
     }
 
+    const getReading = (reading: string[]) => {
+        if (reading) {
+            return reading.map((r, i) =>
+                r === fortKanji.default ?
+                    <Fragment key={i}><span className='find__reading'>{r}</span>{i + 1 !== reading.length ? ', ' : ''}</Fragment>
+                    :
+                    `${r}${i + 1 !== reading.length ? ', ' : ''}`
+            )
+        }
+    }
+
 
     return (
         <section className='section__reviewer'>
@@ -156,8 +166,10 @@ function SideReviewer() {
                                     <div className='description__content'>
                                         <div>
                                             <p>Kanji: {kanjiDefinition?.kanji}</p>
-                                            {kanjiDefinition?.kun_readings && <p>Kun reading: {kanjiDefinition.kun_readings.join(', ')}</p>}
-                                            <p>On reading: {kanjiDefinition?.on_readings?.join(', ')}</p>
+                                            {kanjiDefinition?.kun_readings && <p>Kun reading: {getReading(kanjiDefinition.kun_readings)}</p>}
+                                            {/* {kanjiDefinition?.kun_readings && <p>Kun reading: {kanjiDefinition.kun_readings.join(', ')}</p>} */}
+                                            {kanjiDefinition?.on_readings && <p>On reading: {getReading(kanjiDefinition?.on_readings)}</p>}
+                                            {/* <p>On reading: {kanjiDefinition?.on_readings?.join(', ')}</p> */}
                                             <p>Definition: {kanjiDefinition?.meanings}</p>
                                         </div>
                                     </div>
