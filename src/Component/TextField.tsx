@@ -40,10 +40,8 @@ function TextField({ inputValidator, setInputValidator }: Props) {
   }
 
   return (
-
     <input name="input_romaji" autoFocus className={`${inputValidator === 'blue' ? 'mild-wrong' : inputValidator === 'red' && 'wrong'}`} placeholder='Your Response' type='text'
       onChange={(e) => handleInputChange(e)} />
-
   )
 }
 
