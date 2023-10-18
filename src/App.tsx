@@ -5,23 +5,16 @@ import SideLesson from './Component/SideLesson';
 import SideReviewer from './Component/SideReviewer';
 
 function App() {
-  
-  const { isLoadingList, mode } = useContext(AppContext)
+
+  const { mode } = useContext(AppContext)
 
   return (
     <article className="App">
       <Header />
       <div className='reviewer__container'>
         {
-          isLoadingList &&
-          <div className='loader__list'>
-            <p>Loading</p>
-            <span />
-          </div>
-        }
-        {
-          mode === 'lessons' ? <SideLesson /> : 
-          mode === 'reviewer' && <SideReviewer />
+          mode === 'lesson' ? <SideLesson /> :
+            mode === 'review' && <SideReviewer />
         }
       </div>
     </article>

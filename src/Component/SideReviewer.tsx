@@ -5,88 +5,77 @@ import arrow from '../assets/arrow.svg'
 
 function SideReviewer() {
 
-    const { kanjiList, level, previousReviewBegin, setPreviousReviewBegin, reviewStatus, setReviewStatus } = useContext(AppContext)
-    const [previousReviewMistakes, setPreviousReviewMistakes] = useState<Record<string, any>>({
-        'n5': [],
-        'n4': [],
-        'n3': [],
-        'n2': [],
-        'n1': [],
-    })
+    const { previousMistakes, setPreviousMistakes, kanjiList, level, reviewStatus, setReviewStatus } = useContext(AppContext)
+
     const [fortKanji, setFortKanji] = useState({ default: '', replaced: '', unreplaced: '' })
-    const [inputValidator, setInputValidator] = useState<string | null>(null)
+    const [inputValidator, setInputValidator] = useState<string>('')
     const header = document.querySelector('.header')
     const [kanjiDefinition, setKanjiDefinition] = useState<IKanji>()
+    const [previousReviewBegin, setPreviousReviewBegin] = useState<IKanji[]>([])
 
-    const getRandomUniqueInteger = (array: string[], array2: string[]) => {
-        let randomValue;
-        let randomKanji: any;
+    const getRandomUniqueInteger = (fromArray: IKanji[], toArray: IKanji[]) => {
+        let randomValue, randomKanji;
         do {
-            randomValue = Math.floor(Math.random() * array2.length)
-            randomKanji = array2[randomValue]
-        } while (array.map((item: any) => item.kanji).includes(randomKanji.kanji));
+            randomValue = Math.floor(Math.random() * toArray.length);
+            randomKanji = toArray[randomValue];
+        } while (fromArray.map((item) => item.kanji).includes(randomKanji.kanji));
         return randomKanji;
     }
-
 
     const nextReviewBegin = (firstTime = false, mistake = false) => {
         setReviewStatus('begin')
 
         const isMistake = mistake || header?.getAttribute('mode') === 'mistake'
-        const selectedList: any = isMistake ? previousReviewMistakes[`n${level}`] : kanjiList
-        const arrayOfObjects = Object.keys(selectedList).map((key) => {
-            const obj = selectedList[key];
-            return { ...obj };
-        });
+        const selectedList = isMistake ? previousMistakes[`n${level}`] : kanjiList
+        const arrayOfObjects = Object.keys(selectedList).map((key) => ({ ...selectedList[key] }));
+
         if (previousReviewBegin.length !== arrayOfObjects.length) {
-            const selectedKanji: any = getRandomUniqueInteger(previousReviewBegin, arrayOfObjects)
             setReviewStatus('begin')
+            const selectedKanji: IKanji = getRandomUniqueInteger(previousReviewBegin, arrayOfObjects)
             setPreviousReviewBegin(firstTime ? [selectedKanji] : [...previousReviewBegin, selectedKanji])
             setKanjiDefinition(selectedKanji)
         }
         else handleEndReview()
     }
 
-    useEffect(() => {
-        if (kanjiDefinition) combineQuestion()
-    }, [kanjiDefinition])
+    useEffect(() => { if (kanjiDefinition) combineQuestion() }, [kanjiDefinition])
 
-    const handleBegin = () => {
+    const handleStart = (resume = false) => {
         header?.setAttribute('mode', '')
-        setPreviousReviewBegin([])
-        nextReviewBegin(true)
+        if (resume) nextReviewBegin()
+        else {
+            setPreviousReviewBegin([])
+            nextReviewBegin(true)
+        }
+
     }
-    const handleResume = () => {
-        header?.setAttribute('mode', '')
-        nextReviewBegin()
-    }
+
     const handleMistakes = () => {
-        console.log(previousReviewMistakes)
-        if (Object.keys(previousReviewMistakes[`n${level}`]).length) {
+        if (Object.keys(previousMistakes[`n${level}`]).length) {
             header?.setAttribute('mode', 'mistake')
             nextReviewBegin(true, true)
         }
     }
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        const formData = new FormData(e.target)
+        const formData = new FormData(e.currentTarget)
         const formProps = Object.fromEntries(formData)
-        const input: any = formProps.input_romaji
+        const input = formProps.input_romaji.toString()
         const inputInReadings = (kanjiDefinition?.kun_readings ? kanjiDefinition.kun_readings : kanjiDefinition?.on_readings)?.includes(input)
         const hasParen = /[\(\)]/.test(fortKanji.default)
 
         if (input === fortKanji.unreplaced.replace('-', '')) {
-            e.target.reset()
-            setInputValidator(null)
+            e.currentTarget.reset()
+            setInputValidator('')
             nextReviewBegin(false)
         }
         else if (inputInReadings && !hasParen) setInputValidator('blue')
         else {
-            if (kanjiDefinition && !previousReviewMistakes[`n${level}`].hasOwnProperty(kanjiDefinition.kanji)) {
-                const prevMiss = { ...previousReviewMistakes }
+            if (kanjiDefinition && !previousMistakes[`n${level}`].hasOwnProperty(kanjiDefinition.kanji)) {
+                const prevMiss = { ...previousMistakes }
                 prevMiss[`n${level}`] = { ...prevMiss[`n${level}`], [kanjiDefinition.kanji]: kanjiDefinition }
-                setPreviousReviewMistakes(prevMiss)
+                setPreviousMistakes(prevMiss)
             }
             setInputValidator('red')
         }
@@ -95,8 +84,8 @@ function SideReviewer() {
     const handleEndReview = () => {
         header?.setAttribute('mode', '')
         setReviewStatus('none')
-        setInputValidator(null)
-        setPreviousReviewBegin((list: any) => list.slice(0, -1))
+        setInputValidator('')
+        setPreviousReviewBegin((list) => list.slice(0, -1))
     }
 
     const getRandomItem = (array: string[]) => {
@@ -106,7 +95,7 @@ function SideReviewer() {
     const combineQuestion = () => {
         if (kanjiDefinition) {
             const kReading = kanjiDefinition.kun_readings
-            const oReading: any = kanjiDefinition.on_readings
+            const oReading = kanjiDefinition.on_readings || []
             const selectedReading = kReading ? getRandomItem(kReading) : getRandomItem(oReading)
             const regexDiverse = /([-]|[^-()]+|\([^)]+\))/g;
             const regexParMin = new RegExp(/[\(\)-]/);
@@ -130,7 +119,6 @@ function SideReviewer() {
         }
     }
 
-
     return (
         <section className='section__reviewer'>
 
@@ -146,9 +134,9 @@ function SideReviewer() {
             {
                 reviewStatus === 'none' ?
                     <div className='btn__container'>
-                        <button className='btn__begin' onClick={handleBegin}>Begin</button>
-                        <button onClick={handleResume} className='btn__counter btn__resume' data-counter={`${previousReviewBegin.length}/${kanjiList?.length}`}>Resume</button>
-                        <button onClick={handleMistakes} disabled={!Object.keys(previousReviewMistakes[`n${level}`]).length} className='btn__counter btn__mistakes' data-counter={`${`${Object.keys(previousReviewMistakes[`n${level}`]).length}`}`}>Mistakes</button>
+                        <button className='btn__begin' onClick={() => handleStart()}>Begin</button>
+                        <button onClick={() => handleStart(true)} className='btn__counter btn__resume' data-counter={`${previousReviewBegin.length}/${kanjiList?.length}`}>Resume</button>
+                        <button onClick={handleMistakes} disabled={!Object.keys(previousMistakes[`n${level}`]).length} className='btn__counter btn__mistakes' data-counter={`${`${Object.keys(previousMistakes[`n${level}`]).length}`}`}>Mistakes</button>
                     </div>
                     : reviewStatus === 'begin' &&
                     <div className='section__reviewer__begin'>

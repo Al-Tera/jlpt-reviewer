@@ -2,34 +2,27 @@ import { Dispatch, ReactNode, SetStateAction, createContext, useContext, useStat
 import Kanjis from "./common/kanjiList";
 
 export type IKanji = {
-    'kanji': string;
-    'description': string;
-    'on_readings': string[] | null;
-    'kun_readings': string[] | null;
-    'meanings': string[];
+    kanji: string;
+    description: string;
+    on_readings: string[] | null;
+    kun_readings: string[] | null;
+    meanings: string[];
 }
 
 export interface AppContextInterface {
     kanjiDefinition: IKanji | null,
     setKanjiDefinition: Dispatch<SetStateAction<IKanji | null>>,
+    previousMistakes: Record<string, any>,
+    setPreviousMistakes: Dispatch<SetStateAction<Record<string,any>>>,
     kanjiList: string[],
     setKanjiList: Dispatch<SetStateAction<string[]>>,
-    isLoadingList: boolean,
-    setIsLoadingList: Dispatch<SetStateAction<boolean>>,
-    isLoadingDefinition: boolean,
-    setIsLoadingDefinition: Dispatch<SetStateAction<boolean>>,
-    isLoadingReviewer: boolean,
-    setIsLoadingReviewer: Dispatch<SetStateAction<boolean>>,
     getKanjiList: (level: string) => void;
-    handleKanjiListClick: (level: string) => void;
-    handleKanjiReviewClick: (level: string) => void;
-    handleClickKanji: (level: string) => void;
-    mode: string | null,
-    setMode: Dispatch<SetStateAction<string | null>>,
+    handleHeaderClick: (level: string, toMode: string) => void;
+    handleKanjiClick: (level: string) => void;
+    mode: string,
+    setMode: Dispatch<SetStateAction<string>>,
     reviewStatus: string,
     setReviewStatus: Dispatch<SetStateAction<string>>,
-    previousReviewBegin: string[],
-    setPreviousReviewBegin: Dispatch<SetStateAction<string[]>>,
     level: string | null,
     setLevel: Dispatch<SetStateAction<string | null>>,
 
@@ -38,97 +31,73 @@ export interface AppContextInterface {
 const defaultState = {
     kanjiDefinition: null,
     setKanjiDefinition: () => { },
+    previousMistakes: [],
+    setPreviousMistakes: () => { },
     kanjiList: [],
     setKanjiList: () => { },
-    isLoadingList: false,
-    setIsLoadingList: () => { },
-    isLoadingDefinition: false,
-    setIsLoadingDefinition: () => { },
-    isLoadingReviewer: false,
-    setIsLoadingReviewer: () => { },
     getKanjiList: () => { },
-    handleKanjiListClick: () => { },
-    handleKanjiReviewClick: () => { },
-    handleClickKanji: () => { },
+    handleHeaderClick: () => { },
+    handleKanjiClick: () => { },
     mode: '',
     setMode: () => { },
     level: '',
     setLevel: () => { },
     reviewStatus: '',
     setReviewStatus: () => { },
-    previousReviewBegin: [],
-    setPreviousReviewBegin: () => { },
 
 } as AppContextInterface
 
+type AppProviderProps = { children: ReactNode }
 export const AppContext = createContext(defaultState)
-
-type AppProviderProps = {
-    children: ReactNode
-}
-
-export function useAppContext(): AppContextInterface {
-    return useContext(AppContext);
-}
+export const useAppContext = (): AppContextInterface => useContext(AppContext);
 
 export default function AppProvider({ children }: AppProviderProps) {
     const [kanjiDefinition, setKanjiDefinition] = useState<IKanji | null>(null)
-    const [isLoadingList, setIsLoadingList] = useState<boolean>(false)
-    const [isLoadingDefinition, setIsLoadingDefinition] = useState<boolean>(false)
-    const [isLoadingReviewer, setIsLoadingReviewer] = useState<boolean>(false)
     const [kanjiList, setKanjiList] = useState<string[]>([])
-    const [mode, setMode] = useState<string | null>('')
+    const [mode, setMode] = useState<string>('')
     const [level, setLevel] = useState<string | null>(null)
     const [reviewStatus, setReviewStatus] = useState('none')
-    const [previousReviewBegin, setPreviousReviewBegin] = useState<any>([])
+    const [previousMistakes, setPreviousMistakes] = useState<Record<string,any>>({
+        'n5': [],
+        'n4': [],
+        'n3': [],
+        'n2': [],
+        'n1': [],
+    })
 
-    const getKanjiList = async (checkLevel: string) => {
-        const activeKanjis = Object.entries(Kanjis[`n${checkLevel}`]).map(([kanji, value]:[string, any]) => { return { ...value, kanji } })
+    const getKanjiList = (checkLevel: string) => {
+        const activeKanjis = Object.entries(Kanjis[`n${checkLevel}`]).map(([kanji, value]: [string, any]) => { return { ...value, kanji } })
         setKanjiList(activeKanjis)
     }
 
-    const handleClickKanji = (kanji: string) => {
+    const handleKanjiClick = (kanji: string) => {
         const findKanji: Record<string, IKanji> = Kanjis[`n${level}`]
         setKanjiDefinition({ ...findKanji[kanji], kanji })
     }
 
-    const handleKanjiListClick = async (lesson: any) => {
-        setMode('lessons')
-        setLevel(lesson)
-    }
-
-
-    const handleKanjiReviewClick = (reviewer: any) => {
-        setMode('reviewer')
-        setLevel(reviewer)
-        getKanjiList(reviewer)
+    const handleHeaderClick = (level: string, toMode: string) => {
+        setMode(toMode)
+        setLevel(level)
         setReviewStatus('none')
+        if(toMode === 'review') getKanjiList(level)
     }
-
 
     const contextValue: AppContextInterface = {
         kanjiDefinition,
         setKanjiDefinition,
+        previousMistakes,
+        setPreviousMistakes,
         kanjiList,
         setKanjiList,
-        isLoadingList,
-        setIsLoadingList,
-        isLoadingDefinition,
-        setIsLoadingDefinition,
-        isLoadingReviewer,
-        setIsLoadingReviewer,
         getKanjiList,
         mode,
         setMode,
         level,
         setLevel,
-        handleKanjiListClick,
-        handleKanjiReviewClick,
-        handleClickKanji,
+        handleHeaderClick,
+        handleKanjiClick,
         reviewStatus,
         setReviewStatus,
-        previousReviewBegin,
-        setPreviousReviewBegin
     };
 
     return (

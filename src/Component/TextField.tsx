@@ -2,14 +2,14 @@ import { Dispatch, SetStateAction } from 'react'
 import { hiragana, hiraganaMap, minorHiraganaMap } from '../common/constant';
 
 interface Props {
-  inputValidator: string | null;
-  setInputValidator: Dispatch<SetStateAction<string | null>>;
+  inputValidator: string;
+  setInputValidator: Dispatch<SetStateAction<string>>;
 }
 
 function TextField({ inputValidator, setInputValidator }: Props) {
 
-  const handleInputChange = (e: any) => {
-    setInputValidator(null)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValidator('')
     const value = e.target.value
     if (value) {
       const nonVowelPrecedeVowel = '[^aeiou][aeiou]'
@@ -26,7 +26,7 @@ function TextField({ inputValidator, setInputValidator }: Props) {
       const regexPatternOmni = `${IgnoreSpecialChara}|${hiraganas}|${longString}|${longSpecialTS}|${doubleLetter}|${specialTS}|${doubleN}|${middleHY}|${nonVowelPrecedeVowel}|${SingleChara}`
 
       const regexPattern = new RegExp(`${regexPatternOmni}|${regexPatternOmni.toLocaleLowerCase()}`, "gi");
-      const regexOutput = value.replaceAll('l', 'r').match(regexPattern);
+      const regexOutput = value.replace(/l/g, 'r').match(regexPattern) || [];
 
       const toHiragana = regexOutput.map((out: string) => {
         return (
@@ -41,7 +41,7 @@ function TextField({ inputValidator, setInputValidator }: Props) {
 
   return (
 
-    <input name="input_romaji" autoFocus className={`${inputValidator==='blue' ? 'mild-wrong' : inputValidator==='red' && 'wrong'}`} placeholder='Your Response' type='text'
+    <input name="input_romaji" autoFocus className={`${inputValidator === 'blue' ? 'mild-wrong' : inputValidator === 'red' && 'wrong'}`} placeholder='Your Response' type='text'
       onChange={(e) => handleInputChange(e)} />
 
   )

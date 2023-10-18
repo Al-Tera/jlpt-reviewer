@@ -1,4 +1,4 @@
-const hiraganaMap:any = {
+const hiraganaMap: Record<string, string> = {
   'a': 'あ',
   'e': 'え',
   'i': 'い',
@@ -14,6 +14,7 @@ const hiraganaMap:any = {
   'chi': 'ち',
   'cho': 'ちょ',
   'cha': 'ちゃ',
+  'chu': 'ちゅ',
   'ci': 'ち',
   'co': 'こ',
   'cu': 'く',
@@ -35,6 +36,7 @@ const hiraganaMap:any = {
   'hu': 'ふ',
   'ji': 'じ',
   'ja': 'じゃ',
+  'jo': 'じょ',
   'ka': 'か',
   'ke': 'け',
   'ki': 'き',
@@ -113,9 +115,9 @@ const hiraganaMap:any = {
   'JA': 'ジャ', 'JU': 'ジュ', 'JO': 'ジョ',
   'BYA': 'ビャ', 'BYU': 'ビュ', 'BYO': 'ビョ',
   'PYA': 'ピャ', 'PYU': 'ピュ', 'PYO': 'ピョ'
-}; 
+};
 
-const katakanaToHiragana: any = {
+const katakanaToHiragana: Record<string, string> = {
   'ア': 'あ',
   'エ': 'え',
   'イ': 'い',
@@ -192,7 +194,7 @@ const katakanaToHiragana: any = {
   'ゾ': 'ぞ',
   'ズ': 'ず',
   'ン': 'ん',
-}; 
+};
 
 const hiragana = [
   'あ', 'い', 'う', 'え', 'お',
@@ -223,7 +225,7 @@ const hiragana = [
   'ぴゃ', 'ぴゅ', 'ぴょ'
 ];
 
-const minorHiraganaMap:any = {
+const minorHiraganaMap: Record<string, string> = {
   'ya': 'ゃ',
   'ye': 'ぇ',
   'yi': 'ぃ',
