@@ -20,11 +20,11 @@ function SideLesson() {
 
   const getOnReadings = () => {
     if (kanjiDefinition?.on_readings)
-    return  <p><strong>On Readings:</strong> {kanjiDefinition.on_readings.join(', ')}</p>
+    return  <p><strong>On readings:</strong> {kanjiDefinition.on_readings.join(', ')}</p>
   }
   const getKunReadings = () => {
     if (kanjiDefinition?.kun_readings)
-    return  <p><strong>kun_readings:</strong> {kanjiDefinition.kun_readings.join(',  ')}</p>
+    return  <p><strong>Kun readings:</strong> {kanjiDefinition.kun_readings.join(',  ')}</p>
   }
 
 
